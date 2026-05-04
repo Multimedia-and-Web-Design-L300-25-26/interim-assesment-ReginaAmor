@@ -1,36 +1,22 @@
-const User = require('../models/User');
+const User = require("../models/User");
 
-// @desc    Get current logged-in user profile
-// @route   GET /api/user/profile
-// @access  Private
-const getProfile = async (req, res) => {
+exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        id: user._id,
+    if (user) {
+      res.json({
+        _id: user._id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar,
-        memberSince: user.createdAt
-      }
-    });
+        createdAt: user.createdAt,
+      });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error fetching profile.'
-    });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-module.exports = { getProfile };
+    
