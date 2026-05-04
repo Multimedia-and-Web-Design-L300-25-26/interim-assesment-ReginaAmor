@@ -1,4 +1,4 @@
-const Crypto = require("../models/Crypto");
+const Crypto = require("../models/crypto");
 
 
 exports.getAllCryptos = async (req, res) => {
