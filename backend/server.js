@@ -1,62 +1,53 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const dotenv = require('dotenv');
-const path = require('path');
+const express = require("express");
+const mongoose = require("mongoose");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+require("dotenv").config();
 
-dotenv.config();
+const authRoutes = require("./routes/authRoutes");
+const cryptoRoutes = require("./routes/cryptoRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
-// Middleware
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../frontend')));
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', process.env.FRONTEND_URL].filter(Boolean);
 
-// API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/crypto', require('./routes/cryptoRoutes'));
-app.use('/api/user', require('./routes/userRoutes'));
-
-// Frontend Routes — serve HTML pages
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/register.html'));
-});
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/login.html'));
-});
-
-app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/profile.html'));
-});
-
-app.get('/crypto', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/crypto.html'));
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/index.html'));
-});
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected successfully');
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
   })
-  .catch(err => {
-    console.error('❌ MongoDB connection failed:', err.message);
+);
+
+
+app.use("/", authRoutes);
+app.use("/crypto", cryptoRoutes);
+app.use("/user", userRoutes);
+
+
+app.get("/", (req, res) => {
+  res.json({ message: "Coinbase Clone API is running!" });
+});
+
+
+const PORT = process.env.PORT || 5000;
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err.message);
     process.exit(1);
   });
